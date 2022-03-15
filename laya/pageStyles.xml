@@ -1,3 +1,4 @@
 <page>
    <item name="views/start.scene" props="" ifExport="Default" aName=""/>
+   <item name="test.scene" props="" ifExport="Default" aName=""/>
 </page>

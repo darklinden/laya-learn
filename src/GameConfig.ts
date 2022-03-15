@@ -2,6 +2,9 @@
 import SceneMatchParent from "./scripts/lib/SceneMatchParent"
 import UISafeArea from "./scripts/lib/UISafeArea"
 import UIScaleFit from "./scripts/lib/UIScaleFit"
+import PanelTest from "./scripts/lib/test/PanelTest"
+import UIPanelBg from "./scripts/lib/UIPanelBg"
+import UILBtn from "./scripts/lib/UILBtn"
 /*
 * 游戏初始化配置;
 */
@@ -24,6 +27,9 @@ export default class GameConfig{
         reg("scripts/lib/SceneMatchParent.ts",SceneMatchParent);
         reg("scripts/lib/UISafeArea.ts",UISafeArea);
         reg("scripts/lib/UIScaleFit.ts",UIScaleFit);
+        reg("scripts/lib/test/PanelTest.ts",PanelTest);
+        reg("scripts/lib/UIPanelBg.ts",UIPanelBg);
+        reg("scripts/lib/UILBtn.ts",UILBtn);
     }
 }
 GameConfig.init();

@@ -32,8 +32,7 @@ const EFitLimitStepDict = {
     P00: 0,
 }
 
-const kTimeScale: number = 0.1;
-const kBigScale: number = 1.05;
+const fAnimTime: number = 300;
 
 export default class UIScaleFit extends Laya.Script {
 
@@ -43,7 +42,7 @@ export default class UIScaleFit extends Laya.Script {
     /** @prop { name:sFitLimit, tips:"适配参考类型", type:Option, default:"Height", option:"Height,Width" } */
     public sFitLimit: string = "Height";
 
-    public get FitLimit() {
+    public get FitLimit(): EFitLimit {
         return EFitLimit[this.sFitLimit];
     }
 
@@ -176,72 +175,75 @@ export default class UIScaleFit extends Laya.Script {
         owner.scale(scale, scale);
     }
 
-    // public animEnable(completion: () => void = null, dur: number = -1) {
-    //     if (dur !== -1) {
-    //         this.scheduleOnce(() => {
-    //             if (cc.isValid(this.node)) {
-    //                 this.onRectChange();
-    //                 this.node.parent.on("size-changed", this.onRectChange, this);
-    //                 this.node.on("size-changed", this.onSizeChange, this);
-    //                 completion && completion();
-    //             }
-    //         }, dur);
-    //     } else {
-    //         let des_scale = 1.0;
-    //         switch (this.fitType) {
-    //             case EFitLimit.WidthLimit: {
-    //                 des_scale = this.fitWidth();
-    //             }
-    //                 break;
-    //             case EFitLimit.HeightLimit: {
-    //                 des_scale = this.fitHeight();
-    //             }
-    //                 break;
-    //             default:
-    //                 break;
-    //         }
-    //         this.node.scale = 0.9;
-    //         this.scheduleOnce(() => {
-    //             cc.isValid(this.node) && this.node.runAction(cc.sequence(
-    //                 cc.spawn(
-    //                     cc.fadeIn(kTimeScale * 1.3),
-    //                     cc.scaleTo(kTimeScale * 1.3, kBigScale),
-    //                 ),
-    //                 cc.scaleTo(kTimeScale * 1.5, des_scale),
-    //                 cc.callFunc(() => {
-    //                     if (cc.isValid(this.node)) {
-    //                         this.onRectChange();
-    //                         this.node.parent.on("size-changed", this.onRectChange, this);
-    //                         this.node.on("size-changed", this.onSizeChange, this);
-    //                         completion && completion();
-    //                     }
-    //                 })));
-    //         });
-    //     }
-    // }
+    public AnimEnable(completion: () => void = null, dur: number = -1) {
+        if (dur !== -1) {
+            dur = fAnimTime;
+        }
 
-    // public animDisable(completion: () => void = null, dur: number = 0) {
-    //     if (dur !== -1) {
-    //         this.scheduleOnce(() => {
-    //             if (cc.isValid(this.node)) {
-    //                 this.node.parent.off("size-changed", this.onRectChange, this);
-    //                 this.node.off("size-changed", this.onSizeChange, this);
-    //                 completion && completion();
-    //             }
-    //         }, dur);
-    //     } else {
-    //         this.node.runAction(cc.sequence(
-    //             cc.spawn(
-    //                 cc.scaleTo(kTimeScale * 2, 0.8),
-    //                 cc.fadeOut(kTimeScale * 2),
-    //             ),
-    //             cc.callFunc(() => {
-    //                 if (cc.isValid(this.node)) {
-    //                     this.node.parent.off("size-changed", this.onRectChange, this);
-    //                     this.node.off("size-changed", this.onSizeChange, this);
-    //                     completion && completion();
-    //                 }
-    //             })));
-    //     }
-    // }
+        if (!this || !this.owner || !this.owner.parent) return;
+
+        const owner = (this.owner as Laya.UIComponent);
+        const parent = (this.owner.parent as Laya.UIComponent);
+
+        if (owner == null || parent == null) return;
+
+        let w = owner.width;
+        let pw = parent.width;
+        let h = owner.height;
+        let ph = parent.height;
+
+        let des_scale = 1.0;
+        switch (this.FitLimit) {
+            case EFitLimit.Width: {
+                if (w < pw * this.RateLimitMin) {
+                    des_scale = pw * this.RateLimitMin / w;
+                }
+                else if (w > pw * this.RateLimitMax) {
+                    des_scale = pw * this.RateLimitMax / w;
+                }
+            }
+                break;
+            case EFitLimit.Height: {
+                if (h < ph * this.RateLimitMin) {
+                    des_scale = ph * this.RateLimitMin / h;
+                }
+                else if (h > ph * this.RateLimitMax) {
+                    des_scale = ph * this.RateLimitMax / h;
+                }
+            }
+                break;
+            default:
+                break;
+        }
+
+        owner.scale(0.01, 0.01);
+        Laya.timer.callLater(this, () => {
+            Laya.Tween.to(owner, { scaleX: des_scale * 1.1, scaleY: des_scale * 1.1 }, dur * 0.8, Laya.Ease.bounceInOut, Laya.Handler.create(this, () => {
+                Laya.Tween.to(owner, { scaleX: des_scale, scaleY: des_scale }, dur * 0.2, Laya.Ease.bounceIn, Laya.Handler.create(this, () => {
+                    this.onParentResize();
+                    this.owner.parent.on(Laya.Event.RESIZE, this, this.onParentResize);
+                    completion && completion();
+                }));
+            }));
+        });
+    }
+
+    public AnimDisable(completion: () => void = null, dur: number = 0) {
+        if (dur !== -1) {
+            dur = fAnimTime;
+        }
+
+        if (!this || !this.owner || !this.owner.parent) return;
+
+        const owner = (this.owner as Laya.UIComponent);
+        const parent = (this.owner.parent as Laya.UIComponent);
+
+        if (owner == null || parent == null) return;
+
+        const des_scale = 0.01;
+        Laya.Tween.to(owner, { scaleX: des_scale, scaleY: des_scale }, dur, Laya.Ease.bounceIn, Laya.Handler.create(this, () => {
+            this.owner.parent.off(Laya.Event.RESIZE, this, this.onParentResize);
+            completion && completion();
+        }));
+    }
 }
