@@ -2,27 +2,26 @@ import UIPanel from "./UIPanel";
 
 const BGSprite = 'res/UIPanelBg.png';
 
-export default class UIPanelBg extends Laya.Image {
+export default class UIPanelBg extends Laya.Script {
 
     /** @prop { name:CloseOnClicked, tips:"当点击时关闭父UIPanel", type:Bool, default:true }*/
     public CloseOnClicked: boolean = true;
 
     onAwake(): void {
+        (this.owner as Laya.Image).loadImage(BGSprite);
+        const widget = this.owner.getComponent(Laya.Widget) || this.owner.addComponent(Laya.Widget);
+        widget.left = 0;
+        widget.right = 0;
+        widget.top = 0;
+        widget.bottom = 0;
 
-        this.loadImage(BGSprite, Laya.Handler.create(this, () => {
-            this._widget.left = 0;
-            this._widget.right = 0;
-            this._widget.top = 0;
-            this._widget.bottom = 0;
-        }));
-
-        this.on(Laya.Event.CLICK, this, this.onClicked);
+        this.owner.on(Laya.Event.CLICK, this, this.onClick);
     }
 
-    private onClicked(button: Laya.Button): void {
+    onClick(e: Laya.Event): void {
         if (!this.CloseOnClicked) return;
 
-        let pa = this.parent;
+        let pa = this.owner;
         let limit = 5;
         let panel: UIPanel = null;
         while (pa && limit > 0) {
@@ -36,6 +35,6 @@ export default class UIPanelBg extends Laya.Image {
             }
         }
 
-        if (panel) panel.ZCloseClicked();
+        if (panel) panel.ZCloseClicked(false);
     }
 }

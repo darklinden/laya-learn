@@ -1,4 +1,3 @@
-
 export default class UIPanel extends Laya.UIComponent {
 
     // @property({ visible: true })
@@ -17,17 +16,25 @@ export default class UIPanel extends Laya.UIComponent {
     // protected _notSave: boolean = false;
 
     // private _widget: cc.Widget = null;
-    // protected _onPanelClosed: (forceClose: boolean) => void = null;
 
-    // public preventAction(): boolean {
-    //     return true;
-    // }
+    public SetData(data: any): void {
+        console.error('UIPanel.SetData No Implementation: ' + this.name, data);
+    }
 
-    // public doNotSave(): boolean {
-    //     return this._notSave;
-    // }
+    public ApplyData(data: any): boolean {
+        console.error('UIPanel.ApplyData No Implementation: ' + this.name, data);
+        return false;
+    }
 
-    public ZCloseClicked(forceClose: boolean = false) {
+    public panelPath: string | null;
+    protected _onPanelClosed: (panelPath: string, panel: UIPanel) => void;
+    public SetCloseCallback(closedCall: (panelPath: string, panel: UIPanel) => void) {
+        this._onPanelClosed = closedCall;
+    }
+
+    public ZCloseClicked(force: boolean = false) {
+        this._onPanelClosed && this._onPanelClosed(this.panelPath, this);
+
         // if (this._animRectSizeFit && this._autoAnimateDisable) {
 
         //     this._animRectSizeFit.animDisable(() => {
@@ -118,14 +125,7 @@ export default class UIPanel extends Laya.UIComponent {
 
 
 
-    // public setData(data: any): void {
-    //     cc.error('CommonPanel.setData No Implementation: ' + this.name);
-    //     cc.error(data);
-    // }
 
-    // public setClosedCallback(closedCall: (forceClose: boolean) => void) {
-    //     this._onPanelClosed = closedCall;
-    // }
 
     // protected resetSize() {
     //     this._widget = this._widget || this.getComponent(cc.Widget) || this.addComponent(cc.Widget);

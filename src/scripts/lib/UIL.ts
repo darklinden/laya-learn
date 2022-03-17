@@ -1,6 +1,6 @@
 import UIPanel from "./UIPanel";
 
-const PanelPath = 'panel/';
+const PanelPathPrefix = 'prefab/ui_';
 
 export default class UIL {
 
@@ -10,257 +10,208 @@ export default class UIL {
         return this._instance;
     }
 
-    // private _save
-    // private setPanel(path: string, panel: cc.Node) {
-    //     this._panelSaved = this._panelSaved || {};
-    //     this._panelSaved[this._scene] = this._panelSaved[this._scene] || {};
-    //     this._panelSaved[this._scene][path] = panel;
-    // }
-
-    // private getPanel(path: string): cc.Node {
-    //     this._panelSaved = this._panelSaved || {};
-    //     this._panelSaved[this._scene] = this._panelSaved[this._scene] || {};
-    //     return this._panelSaved[this._scene][path];
-    // }
-
-    // // for prevent fire
-    // private _panelShow: Dictionary<boolean> = {};
-    // public hasShownPanel() {
-    //     let has = false;
-    //     for (const k in this._panelShow) {
-    //         if (this._panelShow[k]) {
-    //             has = true;
-    //             break;
-    //         }
-    //     }
-    //     return has;
-    // }
-
-    // public markPanelShow(k: string) {
-    //     this._panelShow[k] = true;
-    // }
-
-    // public markPanelClosed(k: string) {
-    //     this._panelShow[k] = false;
-    //     delete this._panelShow[k];
-    // }
-
-    public static Show(panelName: string, data?: any, completion?: (panel: UIPanel) => void): void {
-        this.instance._Show(panelName, data, completion);
+    private _lastRootCount: number = -1;
+    private _lastRootIndex: number = -1;
+    private _panelRoot: Laya.Node = null;
+    public static AddPanelRoot() {
+        this.instance._AddPanelRoot();
     }
 
-    private _Show(panelName: string, data?: any, completion?: (panel: UIPanel) => void): void {
+    public _AddPanelRoot() {
 
-        // let path: string = PanelPath + panelName;
+        const root = new Laya.Sprite();
+        root.name = 'UIL Panel Root';
+        Laya.stage.addChild(root);
+        this._panelRoot = root;
 
-        // const p = this.getPanel(path);
-        // if (p) {
+        this._lastRootCount = Laya.stage.numChildren;
+        this._lastRootIndex = Laya.stage.getChildIndex(this._panelRoot);
 
-        //     let preventAction = true;
-        //     let c = p.getComponent(panelName);
-        //     if (!c) c = p.getComponent(CommonPanel);
-        //     if (c) {
-        //         try {
-        //             c['setClosedCallback']((forceClose: boolean) => {
-        //                 this.markPanelClosed(path);
-        //                 !forceClose && closed && closed();
-        //             });
-        //             if (data) c['setData'](data);
-        //             preventAction = c['preventAction']();
-        //         }
-        //         catch (e) {
-        //             cc.log(e);
-        //         }
-        //     }
+        // warnning: LayaAir does not support CHILDCHANGED event, change che source code to add it for Stage
+        // Laya.Node this._childChanged();
+        // class Stage extends Sprite { ... _childChanged(child = null) { this.event(Event.CHILDCHANGED); }
+        // class Event { ... Event.CHILDCHANGED = "childchanged";
+        Laya.stage.on(Laya.Event.STAGE_CHILD_CHANGE, this, (child: Node) => {
+            // prevent loop set
+            if (Laya.stage.numChildren != this._lastRootCount
+                || Laya.stage.getChildIndex(this._panelRoot) != this._lastRootIndex) {
+                // should change this._panelRoot to cover 
+                Laya.timer.callLater(this, () => {
+                    this._lastRootCount = Laya.stage.numChildren;
+                    this._lastRootIndex = Laya.stage.numChildren - 1;
+                    Laya.stage.setChildIndex(this._panelRoot, Laya.stage.numChildren - 1);
+                });
+            }
+        });
 
-        //     p.active = true;
-        //     vag.util.bringNodeToFront(p);
-        //     preventAction && this.markPanelShow(path);
-        //     this.eventChanged();
-        //     if (completion) completion(p);
-        //     return;
-        // }
-
-        // if (this._panelLoading[path]) return;
-
-        // this._panelLoading[path] = true;
-        // vag.loading.show();
-
-        // let abundle = cc.resources;
-        // let loadPath = path;
-
-        // let adc = vag.downloadFile.getDownloadContentInfoForGametype(vag.data.game.gameType)
-        // if (adc && adc.assetBundle) {
-        //     abundle = adc.assetBundle;
-        //     loadPath = PanelPath + panelName;
-        // }
-
-        // abundle.load(loadPath, cc.Prefab, (err: Error, panelPrefab: cc.Prefab) => {
-        //     if (!this._panelLoading[path]) return;
-        //     delete this._panelLoading[path];
-        //     vag.loading.hide();
-        //     if (err) {
-        //         cc.error(err);
-        //         closed && closed();
-        //     }
-        //     else {
-        //         if (!panelPrefab) {
-        //             cc.error('UILoader.show empty resource');
-        //             closed && closed();
-        //             return;
-        //         }
-
-        //         this.addRes2Release(panelPrefab);
-
-        //         const panel = cc.instantiate(panelPrefab.data);
-
-        //         let preventAction = true;
-        //         let c = panel.getComponent(panelName);
-        //         if (!c) c = panel.getComponent(CommonPanel);
-        //         if (c) {
-        //             try {
-        //                 const doNotSave = c['doNotSave']();
-        //                 c['setClosedCallback']((forceClose: boolean) => {
-        //                     this.markPanelClosed(path);
-        //                     if (doNotSave) {
-        //                         this.setPanel(path, null);
-        //                     }
-        //                     !forceClose && closed && closed();
-        //                 });
-        //                 if (data) c['setData'](data);
-        //                 preventAction = c['preventAction']();
-        //                 this.setPanel(path, panel);
-
-        //             }
-        //             catch (e) {
-        //                 cc.log(e);
-        //             }
-        //         }
-
-        //         panel.parent = cc.director.getScene().getComponentInChildren(cc.Canvas).node;
-        //         vag.util.bringNodeToFront(panel);
-        //         preventAction && this.markPanelShow(path);
-        //         this.eventChanged();
-        //         if (completion) completion(panel);
-        //     }
-        // });
+        const widget = this._panelRoot.getComponent(Laya.Widget) || this._panelRoot.addComponent(Laya.Widget);
+        widget.left = 0;
+        widget.right = 0;
+        widget.top = 0;
+        widget.bottom = 0;
     }
 
-    public static Hide(panelName: string): void {
-        this.instance._Hide(panelName);
+    private _cachedPanel: Map<string, UIPanel> = new Map();
+
+    // for prevent fire
+    private _showingPanel: Map<string, boolean> = new Map();
+    public HasShownPanel() {
+        return this._showingPanel.size > 0;
     }
 
-    private _Hide(panelName: string) {
-        // if (!gameType) gameType = GameType.HALL;
-
-        // let path: string;
-
-        // if (gameType == GameType.HALL) {
-        //     path = PanelPath + panelName;
-        // }
-        // else {
-        //     path = PanelPath + GameTypeName.toName(gameType) + '/' + panelName;
-        // }
-
-        // const p = this.getPanel(path);
-        // if (p && p.active) {
-        //     this.markPanelClosed(path);
-
-        //     let c = p.getComponent(panelName);
-        //     if (!c) c = p.getComponent(CommonPanel);
-        //     if (c) {
-        //         try {
-        //             c['aBtnCloseClicked']();
-        //         }
-        //         catch (e) {
-        //             cc.log(e);
-        //         }
-        //     }
-        // }
+    public MarkPanelShow(k: string) {
+        this._showingPanel.set(k, true);
     }
 
-    public static IsShowing(panelName: string): boolean {
-        return this.instance._IsShowing(panelName);
+    public MarkPanelClosed(k: string) {
+        this._showingPanel.delete(k);
     }
 
-    private _IsShowing(panelName: string): boolean {
-        // if (!gameType) gameType = GameType.HALL;
-
-        // let path: string;
-
-        // if (gameType == GameType.HALL) {
-        //     path = PanelPath + panelName;
-        // }
-        // else {
-        //     path = PanelPath + GameTypeName.toName(gameType) + '/' + panelName;
-        // }
-
-        // const p = this.getPanel(path);
-        // return (p && p.active);
-        return false;
+    public static Show(panelPath: string, data?: any, completion?: (panel: UIPanel) => void): void {
+        this.instance._Show(panelPath, data, completion);
     }
 
-    public static ApplyData(panelName: string, data: any): void {
-        this.instance._ApplyData(panelName, data);
+    private _pathToUri(panelPath: string): string {
+        return PanelPathPrefix + panelPath + '.json';
     }
 
-    private _ApplyData(panelName: string, data: any) {
-        // if (!gameType) gameType = GameType.HALL;
+    private _createPanel(panelPath: string, prefab_res: Laya.Prefab): UIPanel | null {
+        const prefab: Laya.Prefab = new Laya.Prefab();
+        prefab.json = prefab_res;
+        const p = prefab.create();
 
-        // let path: string;
-
-        // if (gameType == GameType.HALL) {
-        //     path = PanelPath + panelName;
-        // }
-        // else {
-        //     path = PanelPath + GameTypeName.toName(gameType) + '/' + panelName;
-        // }
-
-        // const p = this.getPanel(path);
-        // if (p && p.active) {
-
-        //     let c = p.getComponent(panelName);
-        //     if (!c) c = p.getComponent(CommonPanel);
-        //     if (c) {
-        //         try {
-        //             c['setData'](data);
-        //         }
-        //         catch (e) {
-        //             cc.log(e);
-        //         }
-        //     }
-        // }
+        let panel: UIPanel | null = null;
+        if (p) {
+            panel = p as UIPanel;
+        }
+        return panel;
     }
 
-    public static HideAll(): void {
-        this.instance._HideAll();
+    private _dealBeforePanelShow(panel: UIPanel, panelPath: string, data: any) {
+        this._cachedPanel.set(panelPath, panel);
+
+        panel.panelPath = panelPath;
+        panel.SetCloseCallback((u, p) => {
+            this.MarkPanelClosed(u);
+            this._cachedPanel.delete(u);
+            this._releaseResForPanel(panelPath);
+            panel.destroy();
+        });
+
+        if (data) panel.SetData(data);
+
+        this._panelRoot.addChild(panel);
+
+        // panel.parent = cc.director.getScene().getComponentInChildren(cc.Canvas).node;
+        // vag.util.bringNodeToFront(panel);
+
+        this.MarkPanelShow(panelPath);
     }
 
-    private _HideAll() {
-        // this._panelSaved = this._panelSaved || {};
-        // this._panelShow = {};
-        // this._panelLoading = {};
-        // for (const k in this._panelSaved) {
-        //     if (!this._panelSaved.hasOwnProperty(k)) continue;
+    private _Show(panelPath: string, data?: any, completion?: (panel: UIPanel | null) => void): void {
 
-        //     const dict = this._panelSaved[k];
-        //     if (!dict) continue;
+        const uri: string = this._pathToUri(panelPath);
 
-        //     for (const j in dict) {
-        //         if (!dict.hasOwnProperty(j)) continue;
-        //         const p = dict[j];
-        //         if (p && p.active) {
-        //             const c = p.getComponent(CommonPanel);
-        //             if (c) {
-        //                 try {
-        //                     c['aBtnCloseClicked'](true);
-        //                 }
-        //                 catch (e) {
-        //                     cc.log(e);
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
+        let panel: UIPanel | null = this._cachedPanel.get(panelPath);
+        if (panel) {
+            panel.removeSelf();
+            this._panelRoot.addChild(panel);
+        }
+        else {
+            const prefab_res: any = Laya.loader.getRes(uri);
+
+            if (prefab_res) {
+                panel = this._createPanel(panelPath, JSON.parse(prefab_res));
+                if (panel) {
+                    this._dealBeforePanelShow(panel, panelPath, data);
+                }
+                else {
+                    console.error('UIL.Show Failed. ' + panelPath);
+                }
+                completion && completion(panel);
+            }
+            else {
+                Laya.loader.load(uri, Laya.Handler.create(this, prefab_res => {
+                    panel = this._createPanel(panelPath, prefab_res);
+                    if (panel) {
+                        this._dealBeforePanelShow(panel, panelPath, data);
+                    }
+                    else {
+                        console.error('UIL.Show Failed. ' + panelPath);
+                    }
+                    completion && completion(panel);
+                }));
+            }
+        }
+    }
+
+    public static Close(panelPath: string, force: boolean = false): boolean {
+        return this.instance._Close(panelPath, force);
+    }
+
+    private _Close(panelPath: string, force: boolean): boolean {
+        let panel: UIPanel | null = this._cachedPanel.get(panelPath);
+
+        let ret: boolean = false;
+        if (panel) {
+            ret = true;
+            panel.ZCloseClicked(force);
+        }
+
+        return ret;
+    }
+
+    public static IsShowing(panelPath: string): boolean {
+        return this.instance._IsShowing(panelPath);
+    }
+
+    private _IsShowing(panelPath: string): boolean {
+        let panel: UIPanel | null = this._cachedPanel.get(panelPath);
+        return !!panel;
+    }
+
+    public static ApplyData(panelPath: string, data: any): boolean {
+        return this.instance._ApplyData(panelPath, data);
+    }
+
+    private _ApplyData(panelPath: string, data: any): boolean {
+        let panel: UIPanel | null = this._cachedPanel.get(panelPath);
+
+        let ret: boolean = false;
+        if (panel) {
+            ret = panel.ApplyData(data);
+        }
+
+        return ret;
+    }
+
+    public static CloseAll(): void {
+        this.instance._CloseAll();
+    }
+
+    private _CloseAll() {
+        this._cachedPanel.forEach((panel, panelPath, map) => {
+            this.MarkPanelClosed(panelPath);
+            this._cachedPanel.delete(panelPath);
+            this._releaseResForPanel(panelPath);
+            panel.destroy();
+        });
+    }
+
+    private _pathToRes(panelPath: string): string {
+        return PanelPathPrefix + panelPath + '_deps.json';
+    }
+
+    private _releaseResForPanel(panelPath: string) {
+        const res_path = this._pathToRes(panelPath);
+        Laya.loader.load([{ url: res_path, type: Laya.Loader.JSON }],
+            Laya.Handler.create(this, () => {
+                // 获取加载的数据（Json数组转化成数组）
+                var arr: any = Laya.loader.getRes(res_path);
+                for (var i: number = arr.length - 1; i > -1; i--) {
+                    // 根据资源路径获取资源（Resource为材质、贴图、网格等的基类）
+                    Laya.loader.clearTextureRes(arr[i]);
+                }
+            }));
     }
 }

@@ -8,6 +8,10 @@ export default class UILoaderBtn extends Laya.Script {
     /** @prop {name:Data, tips:"UIPanel 数据", type:String, default:""}*/
     public Data: string = "";
 
+    onEnable(): void {
+        this.owner.on(Laya.Event.CLICK, this, this.onClick);
+    }
+
     onClick(e: Laya.Event): void {
         if (this.Data && this.Data.length) {
             UIL.Show(this.Uri, this.Data);

@@ -1,4 +1,5 @@
 import GameConfig from "./GameConfig";
+import UIL from "./scripts/lib/UIL";
 class Main {
 	constructor() {
 		//根据IDE设置初始化引擎		
@@ -32,7 +33,7 @@ class Main {
 		//加载IDE指定的场景
 		GameConfig.startScene && Laya.Scene.open(GameConfig.startScene);
 		console.log('Main.onConfigLoaded');
-		debugger;
+		UIL.AddPanelRoot();
 	}
 }
 //激活启动类
